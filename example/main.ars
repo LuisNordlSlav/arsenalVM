@@ -1,0 +1,12 @@
+JumpTo: &_start.0->7;
+
+label _data;
+    () greeting = "Hello, world!", 0;
+
+label _start;
+
+    LoadRegisterLong: 0, &greeting.0->7;
+    SysCall: PrintCString;
+
+label _end;
+    Halt;

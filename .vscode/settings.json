@@ -1,0 +1,10 @@
+{
+    "cSpell.words": [
+        "syscall",
+        "syscalls"
+    ],
+    "rust-analyzer.linkedProjects": [
+        ".\\arsenal-assembler\\Cargo.toml",
+        ".\\arsenal-assembler\\Cargo.toml"
+    ]
+}
