@@ -5,10 +5,11 @@ label _data:
     (length) greeting = "Hello, world!" 0;
 
 label _start:
-
+/*
     LoadRegisterLong 0 #5:0->7;
     LoadRegisterLong 5 #-7;
     SysCall PrintRegisterSigned;
+*/
 
     LoadRegisterLong 0 &greeting;
     SysCall PrintCString;
