@@ -34,4 +34,4 @@ label _end:
     Halt;
 
 
-to get a list of instructions and syscalls go to ./arsenal-globals/src/lib.rs where they are defined in an enum. ignore __end__ it is not an instruction.
+to get a list of instructions and syscalls go to ./arsenal-globals/src/lib.rs where they are defined in an enum. ignore __ __END__ __ it is not an instruction.
