@@ -1,12 +1,5 @@
 #![allow(unused)]
 #![allow(non_snake_case)]
-extern crate arsenal_assembler;
-extern crate libc;
-
-pub mod virtual_machine;
-pub mod virtual_thread;
-pub mod debug;
-pub mod instructions_macros;
 pub mod application;
 
 use application::AppAction::*;
@@ -23,7 +16,7 @@ fn main() {
         CompileRun => {
             let data = read(&state.input_file).expect(&format!("Error opening file {}: no such file", state.input_file));
             let result = arsenal_assembler::parse(data).expect(&format!("failed to parse {}", state.input_file));
-            let mut vm = virtual_machine::VirtualMachine::new(result);
+            let mut vm = arsenal_vm::virtual_machine::VirtualMachine::new(result);
             vm.run();
         },
         CompileExecutable => {
@@ -33,7 +26,7 @@ fn main() {
         },
         Run => {
             let data = read(&state.input_file).expect(&format!("Error opening file {}: no such file", state.input_file));
-            let mut vm = virtual_machine::VirtualMachine::new(data);
+            let mut vm = arsenal_vm::virtual_machine::VirtualMachine::new(data);
             vm.run();
         },
         Null => panic!("input file required"),

@@ -6,8 +6,26 @@ version = 3
 name = "arsenal-assembler"
 version = "0.1.0"
 dependencies = [
+ "arsenal-globals",
  "strum",
  "strum_macros",
+]
+
+[[package]]
+name = "arsenal-globals"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
+name = "arsenal-vm"
+version = "0.1.0"
+dependencies = [
+ "arsenal-globals",
 ]
 
 [[package]]
@@ -15,6 +33,8 @@ name = "arsenalVM"
 version = "0.1.0"
 dependencies = [
  "arsenal-assembler",
+ "arsenal-globals",
+ "arsenal-vm",
  "libc",
  "quote",
  "strum",
@@ -56,6 +76,23 @@ name = "rustversion"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ffc183a10b4478d04cbbbfc96d0873219d962dd5accaff2ffbd4ceb7df837f4"
+
+[[package]]
+name = "serde"
+version = "1.0.175"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d25439cd7397d044e2748a6fe2432b5e85db703d6d097bd014b3c0ad1ebff0b"
+
+[[package]]
+name = "serde_derive"
+version = "1.0.175"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b23f7ade6f110613c0d63858ddb8b94c1041f550eab58a16b371bdf2c9c80ab4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "strum"

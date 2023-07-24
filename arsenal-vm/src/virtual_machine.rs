@@ -10,7 +10,7 @@ pub enum RegisterRoles {
     ProgramCounter = 15,
 }
 
-use arsenal_assembler::instructions::{Instructions, SysCalls};
+use arsenal_globals::{Instructions, SysCalls};
 
 pub enum ALUFlags {
     Zero = 0,
@@ -49,7 +49,7 @@ impl VirtualMachine {
     }
 
     pub fn get_rules() -> [fn(&mut VirtualThread) -> (); Instructions::__END__ as usize] {
-        use arsenal_assembler::instructions::Instructions::*;
+        use arsenal_globals::Instructions::*;
 
         let mut rules = [(|_|{}) as fn(&mut VirtualThread) -> (); __END__ as usize];
         rules[Halt as usize] = |thread| { thread.running = false; };
@@ -850,7 +850,7 @@ impl VirtualMachine {
         rules
     }
     pub fn get_syscalls() -> [fn(&mut crate::virtual_thread::VirtualThread) -> (); SysCalls::__END__ as usize] {
-        use arsenal_assembler::instructions::SysCalls::*;
+        use arsenal_globals::SysCalls::*;
 
         let mut syscalls = [(|_|{}) as fn(&mut VirtualThread) -> (); __END__ as usize];
         syscalls[PrintRegister as usize] = |thread| {

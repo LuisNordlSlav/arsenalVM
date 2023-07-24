@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use strum_macros::EnumString;
+use serde_derive::{Serialize, Deserialize};
 
 #[derive(Debug, EnumString, Clone, Copy)]
 pub enum Instructions {
@@ -124,3 +124,6 @@ pub enum SysCalls {
     // nothing after this
     __END__
 }
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct ArsenalHeader {}

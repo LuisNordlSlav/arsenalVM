@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 quote = "1.0.31"
-arsenal-assembler = { path = "./arsenal-assembler" }
 strum_macros = "0.25.1"
 strum = "0.25.0"
 libc = "0.2.147"
+arsenal-assembler = { path = "./arsenal-assembler" }
+arsenal-globals = { path = "./arsenal-globals" }
+arsenal-vm = { path = "./arsenal-vm" }

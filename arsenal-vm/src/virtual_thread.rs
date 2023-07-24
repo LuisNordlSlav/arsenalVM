@@ -53,7 +53,7 @@ impl VirtualThread {
             unsafe {
                 assert!(!(self.parent.as_ref().instructions.len() < self.registers[RegisterRoles::ProgramCounter as usize] as usize), "ran out of instructions at index {} of array of length {}", self.registers[RegisterRoles::ProgramCounter as usize], self.parent.as_ref().instructions.len());
                 let instruction = self.last::<u16>();
-                assert!(instruction < arsenal_assembler::instructions::Instructions::__END__ as u16, "unidentified instruction id {} at {}", instruction, self.registers[RegisterRoles::ProgramCounter as usize]);
+                assert!(instruction < arsenal_globals::Instructions::__END__ as u16, "unidentified instruction id {} at {}", instruction, self.registers[RegisterRoles::ProgramCounter as usize]);
                 self.parent.as_ref().rules[instruction as usize](self);
             }
         }

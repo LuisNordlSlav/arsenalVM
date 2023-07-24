@@ -1,12 +1,11 @@
 #![allow(unused)]
+extern crate arsenal_globals;
 
 use core::panic;
 use std::{collections::HashMap, str::FromStr, io::Read};
 
-use instructions::SysCalls;
+use arsenal_globals::SysCalls;
 use strum::VariantNames;
-
-pub mod instructions;
 
 const IDENTIFIER_STARTER: &str = "qwertyuiopasdfghjklzxcvbnm_QWERTYUIOPASDFGHJKLZXCVBNM";
 const IDENTIFIER: &str = "qwertyuiopasdfghjklzxcvbnm_QWERTYUIOPASDFGHJKLZXCVBNM1234567890";
@@ -279,7 +278,7 @@ pub fn parse(data: Vec<u8>) -> Option<Vec<u8>> {
             let name = next_identifier(&line);
             line = (&line[name.len()..line.len()]).trim_start().to_string();
 
-            if let Ok(instruction) = instructions::Instructions::from_str(&name) {
+            if let Ok(instruction) = arsenal_globals::Instructions::from_str(&name) {
                 data.push(DataObject::Byte(instruction as u8));
                 data.push(DataObject::Byte((instruction as u16).wrapping_shr(8) as u8));
                 bytes_count += 2;
