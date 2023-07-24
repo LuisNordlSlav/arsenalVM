@@ -9,3 +9,4 @@ edition = "2021"
 strum = "0.25.0"
 strum_macros = "0.25.1"
 arsenal-globals = { path = "../arsenal-globals" }
+regex = "1.9.1"

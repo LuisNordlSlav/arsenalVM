@@ -1,12 +1,18 @@
-JumpTo: &_start.0->7;
+JumpTo &_start;
 
-label _data;
-    () greeting = "Hello, world!", 0;
+label _data:
 
-label _start;
+    (length) greeting = "Hello, world!" 0;
 
-    LoadRegisterLong: 0, &greeting.0->7;
-    SysCall: PrintCString;
+label _start:
 
-label _end;
+    LoadRegisterLong 0 5 0 0 0 0 0 0 0;
+    LoadRegisterLong 5 $length;
+    SysCall PrintRegister;
+
+    LoadRegisterLong 0 &greeting;
+    SysCall PrintCString;
+
+label _end:
+
     Halt;
