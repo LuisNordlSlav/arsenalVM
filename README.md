@@ -1,1 +1,1 @@
-this si a hobby virtual machine project.
+this is a hobby virtual machine project.

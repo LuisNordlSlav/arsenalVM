@@ -189,6 +189,30 @@ fn parse_arg_sequence(tokens: &mut std::iter::Peekable<std::slice::Iter<'_, toke
                 data.push(DataObject::SizeRequest(name.clone(), start as u32, stop as u32));
             },
 
+            NumericSlice(_) => {
+                let Number(num) = tokens.next().expect(&format!("expected identifier after $, got nothing")) else { panic!("expected identifier after $"); };
+                let num: u64 = num.parse().unwrap();
+                let (mut start, mut stop) = (0, 7);
+
+                if let Some(Selection(_)) = tokens.peek() {
+                    tokens.next();
+                    let Number(start_str) = tokens.next().expect("expected a number after ($name:)") else { panic!("expected a number after $name:)"); };
+                    start = start_str.parse().expect("($name:) must be followed by a number.");
+                    if let Some(Range(_)) = tokens.peek() {
+                        tokens.next();
+                        let Number(stop_str) = tokens.next().expect("expected a number after ($name:num->)") else { panic!("expected a number after ($name:num->)"); };
+                        stop = stop_str.parse().expect("($name:num->) must be followed by a number.");
+                    }
+                }
+
+                *bytes_count += ((stop - start) + 1);
+                for offset in start..=stop {
+                    unsafe {
+                        data.push(DataObject::Byte(*((&num as *const _ as u64 + offset as u64) as *const u8)));
+                    }
+                }
+            }
+
             Whitespace(_) => unreachable!(),
             token => panic!("unexpected token {:?}", token),
         }

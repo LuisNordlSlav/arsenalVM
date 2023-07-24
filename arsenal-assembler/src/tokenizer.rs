@@ -20,6 +20,7 @@ pub enum ArsenalToken {
     OpenParen(String),
     ClosedParen(String),
     Comment(String),
+    NumericSlice(String),
 }
 
 pub trait Token {
@@ -50,6 +51,7 @@ impl Token for ArsenalToken {
             (r#""(?:\\.|[^\\"])*""#, StringLiteral),
             (r"//.[^\n]*\n", Comment),
             (r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/", Comment),
+            ("#", NumericSlice),
         ] {
             if let Some((pat, length)) = parse_pattern(pattern, data) {
                 return Some((response(pat), &data[length..]));

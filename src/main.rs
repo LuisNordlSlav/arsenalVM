@@ -23,7 +23,7 @@ fn main() {
         },
         CompileExecutable => {
             let data = read(&state.input_file).expect(&format!("Error opening file {}: no such file", state.input_file));
-            let result = arsenal_assembler::parse(data).expect(&format!("failed to parse {}", state.input_file));
+            let result = arsenal_assembler::new_parse(data).expect(&format!("failed to parse {}", state.input_file));
             write(state.output_file, result);
         },
         Run => {
