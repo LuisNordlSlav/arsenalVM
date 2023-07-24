@@ -387,7 +387,7 @@ impl VirtualMachine {
             let register = thread.last::<u8>() & 0x0f;
             unsafe {
                 let location = (&mut thread.registers[register as usize]) as *mut u64 as *mut u8 as usize;
-                pop_byte_stack(&mut thread.stack, &mut thread.registers[RegisterRoles::StackPointer as usize], &mut *((location + 0) as *mut u8));
+                pop_byte_stack(&mut thread.stack, &mut thread.registers[RegisterRoles::StackPointer as usize], &mut *(location as *mut u8));
             }
         };
         rules[PopRegisterShort as usize] = |thread| {
@@ -416,7 +416,7 @@ impl VirtualMachine {
             let register = thread.last::<u8>() & 0x0f;
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u8, read_unaligned((base_pointer + address) as *const u8));
+                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u8, read_unaligned((base_pointer.wrapping_add(address)) as *const u8));
             }
         };
         rules[MoveMemoryRegisterShort as usize] = |thread| {
@@ -424,7 +424,7 @@ impl VirtualMachine {
             let register = thread.last::<u8>() & 0x0f;
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u16, read_unaligned((base_pointer + address) as *const u16));
+                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u16, read_unaligned((base_pointer.wrapping_add(address)) as *const u16));
             }
         };
         rules[MoveMemoryRegisterInt as usize] = |thread| {
@@ -432,7 +432,7 @@ impl VirtualMachine {
             let register = thread.last::<u8>() & 0x0f;
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u32, read_unaligned((base_pointer + address) as *const u32));
+                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u32, read_unaligned((base_pointer.wrapping_add(address)) as *const u32));
             }
         };
         rules[MoveMemoryRegisterLong as usize] = |thread| {
@@ -440,7 +440,7 @@ impl VirtualMachine {
             let register = thread.last::<u8>() & 0x0f;
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u64, read_unaligned((base_pointer + address) as *const u64));
+                write_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u64, read_unaligned((base_pointer.wrapping_add(address)) as *const u64));
             }
         };
         rules[MoveRegisterMemoryByte as usize] = |thread| {
@@ -448,7 +448,7 @@ impl VirtualMachine {
             let address = thread.last::<u64>();
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned((base_pointer + address) as *mut u8, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u8));
+                write_unaligned((base_pointer.wrapping_add(address)) as *mut u8, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u8));
             }
         };
         rules[MoveRegisterMemoryShort as usize] = |thread| {
@@ -456,7 +456,7 @@ impl VirtualMachine {
             let address = thread.last::<u64>();
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned((base_pointer + address) as *mut u16, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u16));
+                write_unaligned((base_pointer.wrapping_add(address)) as *mut u16, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u16));
             }
         };
         rules[MoveRegisterMemoryInt as usize] = |thread| {
@@ -464,7 +464,7 @@ impl VirtualMachine {
             let address = thread.last::<u64>();
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned((base_pointer + address) as *mut u32, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u32));
+                write_unaligned((base_pointer.wrapping_add(address)) as *mut u32, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u32));
             }
         };
         rules[MoveRegisterMemoryLong as usize] = |thread| {
@@ -472,7 +472,7 @@ impl VirtualMachine {
             let address = thread.last::<u64>();
             let base_pointer = &thread.parent.as_ref().instructions[0] as *const u8 as u64;
             unsafe {
-                write_unaligned((base_pointer + address) as *mut u64, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u64));
+                write_unaligned((base_pointer.wrapping_add(address)) as *mut u64, read_unaligned(&mut thread.registers[register as usize] as *mut _ as *mut u64));
             }
         };
         rules[PushMemoryByte as usize] = |thread| {
@@ -754,97 +754,97 @@ impl VirtualMachine {
         rules[MoveAddressedRegisterRegisterByte as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned(val2 as *mut u8, read_unaligned((read_unaligned(val1) + base(thread)) as *const u8));
+                write_unaligned(val2 as *mut u8, read_unaligned((read_unaligned(val1).wrapping_add(base(thread))) as *const u8));
             }
         };
         rules[MoveAddressedRegisterRegisterShort as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned(val2 as *mut u16, read_unaligned((read_unaligned(val1) + base(thread)) as *const u16));
+                write_unaligned(val2 as *mut u16, read_unaligned((read_unaligned(val1).wrapping_add(base(thread))) as *const u16));
             }
         };
         rules[MoveAddressedRegisterRegisterInt as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned(val2 as *mut u32, read_unaligned((read_unaligned(val1) + base(thread)) as *const u32));
+                write_unaligned(val2 as *mut u32, read_unaligned((read_unaligned(val1).wrapping_add(base(thread))) as *const u32));
             }
         };
         rules[MoveAddressedRegisterRegisterLong as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned(val2 as *mut u64, read_unaligned((read_unaligned(val1) + base(thread)) as *const u64));
+                write_unaligned(val2 as *mut u64, read_unaligned((read_unaligned(val1).wrapping_add(base(thread))) as *const u64));
             }
         };
         rules[MoveRegisterAddressedRegisterByte as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u8, read_unaligned(val1 as *const u8));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u8, read_unaligned(val1 as *const u8));
             }
         };
         rules[MoveRegisterAddressedRegisterShort as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u16, read_unaligned(val1 as *const u16));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u16, read_unaligned(val1 as *const u16));
             }
         };
         rules[MoveRegisterAddressedRegisterInt as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u32, read_unaligned(val1 as *const u32));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u32, read_unaligned(val1 as *const u32));
             }
         };
         rules[MoveRegisterAddressedRegisterLong as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u64, read_unaligned(val1 as *const u64));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u64, read_unaligned(val1 as *const u64));
             }
         };
         rules[MoveAddressedRegistersByte as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u8, read_unaligned((read_unaligned(val1) + base(thread)) as *const u8));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u8, read_unaligned((read_unaligned(val1) + base(thread)) as *const u8));
             }
         };
         rules[MoveAddressedRegistersShort as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u16, read_unaligned((read_unaligned(val1) + base(thread)) as *const u16));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u16, read_unaligned((read_unaligned(val1) + base(thread)) as *const u16));
             }
         };
         rules[MoveAddressedRegistersInt as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u32, read_unaligned((read_unaligned(val1) + base(thread)) as *const u32));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u32, read_unaligned((read_unaligned(val1) + base(thread)) as *const u32));
             }
         };
         rules[MoveAddressedRegistersLong as usize] = |thread| {
             let registers = thread.last::<u8>();
             let (r1, r2) = ((registers & 0xf0) >> 4, (registers & 0x0f));
-            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut _, &mut thread.registers[r2 as usize] as *mut _);
+            let (val1, val2) = (&mut thread.registers[r1 as usize] as *mut u64, &mut thread.registers[r2 as usize] as *mut u64);
             unsafe {
-                write_unaligned((read_unaligned(val2) + base(thread)) as *mut u64, read_unaligned((read_unaligned(val1) + base(thread)) as *const u64));
+                write_unaligned((read_unaligned(val2).wrapping_add(base(thread))) as *mut u64, read_unaligned((read_unaligned(val1) + base(thread)) as *const u64));
             }
         };
         rules
@@ -854,16 +854,16 @@ impl VirtualMachine {
 
         let mut syscalls = [(|_|{}) as fn(&mut VirtualThread) -> (); __END__ as usize];
         syscalls[PrintRegister as usize] = |thread| {
-            println!("r{} has value {}", thread.registers[0] as usize, thread.registers[thread.registers[0] as usize]);
+            print!("{}", thread.registers[thread.registers[0] as usize]);
         };
         syscalls[PrintRegisterSigned as usize] = |thread| {
-            println!("r{} has value {}", thread.registers[0] as usize, thread.registers[thread.registers[0] as usize] as i64);
+            print!("{}", thread.registers[thread.registers[0] as usize] as i64);
         };
         syscalls[PrintCString as usize] = |thread| {
             unsafe {
                 use std::ffi::{CStr, c_char};
-                let ptr = (thread.registers[0] + (&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize as *const c_char;
-                println!("{}", CStr::from_ptr(ptr).to_str().unwrap());
+                let ptr = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize as *const c_char;
+                print!("{}", CStr::from_ptr(ptr).to_str().expect(&format!("error parsing {}", *ptr)));
             }
         };
         syscalls[MemoryAllocate as usize] = |thread| {
@@ -879,7 +879,46 @@ impl VirtualMachine {
             let (ptr, size) = (thread.registers[0], thread.registers[1]);
             let layout = Layout::from_size_align(size.try_into().unwrap(), std::mem::align_of::<u8>()).unwrap();
             unsafe {
-                dealloc((ptr + base(thread)) as *mut u8, layout);
+                dealloc((ptr.wrapping_add(base(thread))) as *mut u8, layout);
+            }
+        };
+        syscalls[FOpen as usize] = |thread| {
+            use std::ffi::c_char;
+            let ptr1 = (thread.registers[0].wrapping_add(base(thread))) as usize as *const c_char;
+            let ptr2 = (thread.registers[1].wrapping_add(base(thread))) as usize as *const c_char;
+            unsafe {
+                let ptr = libc::fopen(ptr1, ptr2);
+                thread.registers[0] = (ptr as u64).wrapping_sub(base(thread));
+            }
+        };
+        syscalls[FClose as usize] = |thread| {
+            use std::ffi::c_char;
+            let ptr1 = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize;
+            unsafe {
+                let ptr = libc::fclose((ptr1 as u64) as *mut libc::FILE);
+            }
+        };
+        syscalls[FGetC as usize] = |thread| {
+            use std::ffi::c_char;
+            let ptr1 = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize;
+            unsafe {
+                thread.registers[1] = libc::fgetc(ptr1 as *mut libc::FILE) as u64;
+            }
+        };
+        syscalls[FTell as usize] = |thread| {
+            use std::ffi::c_char;
+            let ptr1 = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize;
+            unsafe {
+                thread.registers[1] = libc::ftell((ptr1 as u64) as *mut libc::FILE) as u64;
+            }
+        };
+        syscalls[FSeek as usize] = |thread| {
+            use std::ffi::c_char;
+            let ptr1 = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize;
+            let offset = thread.registers[1];
+            let whence = thread.registers[2];
+            unsafe {
+                thread.registers[1] = libc::fseek((ptr1 as u64) as *mut libc::FILE, offset as i64 as i32, whence as i32) as u64;
             }
         };
         syscalls

@@ -1,18 +1,89 @@
 JumpTo &_start;
 
 label _data:
-
-    (length) greeting = "Hello, world!" 0;
+    () file_path = "example/main.ars" 0;
+    () read_mode = "r" 0;
+    () message = "the file is of length " 0;
+    () new_line = 0x0a 0;
+    () error_message = "error opening file " 0;
 
 label _start:
-/*
-    LoadRegisterLong 0 #5:0->7;
-    LoadRegisterLong 5 #-7;
-    SysCall PrintRegisterSigned;
-*/
 
-    LoadRegisterLong 0 &greeting;
+    LoadRegisterLong 0 &file_path;
+    LoadRegisterLong 1 &read_mode;
+    SysCall FOpen;
+    MoveRegistersLong 0x0b; // file open pointer in r11
+    CompareRegisterLiteralLong 0 #0;
+    JumpIfEqualTo &file_not_accessible;
+    JumpTo &setup;
+
+label file_not_accessible:
+    LoadRegisterLong 0 &error_message;
     SysCall PrintCString;
+    LoadRegisterLong 0 &file_path;
+    SysCall PrintCString;
+    LoadRegisterLong &new_line;
+    SysCall PrintCString;
+
+    JumpTo &_end;
+
+label setup:
+// get the size of the file.
+    SysCall FTell;
+    MoveRegistersLong 0x15;
+    LoadRegisterLong 1 #0;
+    LoadRegisterLong 2 #2;
+    SysCall FSeek;
+    SysCall FTell;
+    AddRegisterImmediateLong 1 #0;
+    MoveRegistersLong 0x19;
+
+    MoveRegistersLong 0x51;
+    LoadRegisterLong 2 #0;
+    SysCall FSeek;
+
+    LoadRegisterLong 0 &message;
+    SysCall PrintCString;
+    LoadRegisterLong 0 #9;
+    SysCall PrintRegister;
+    LoadRegisterLong 0 &new_line;
+    SysCall PrintCString;
+
+// allocate buffer
+    MoveRegistersLong 0x90;
+    SysCall MemoryAllocate;
+    MoveRegistersLong 0x0a; // memory block pointer in r10
+// setup end
+
+    MoveRegistersLong 0xac;
+
+label start_loop:
+
+    MoveRegistersLong 0xb0;
+    SysCall FGetC;
+    MoveRegisterAddressedRegisterLong 0x1c;
+    IncrementRegister 0x0c;
+
+    CompareRegisterLiteralLong 1 #-1;
+    JumpIfEqualTo &end_loop;
+    JumpTo &start_loop;
+
+label end_loop:
+
+    DecrementRegister 0x0c;
+    MoveRegisterAddressedRegisterLong 0xdc;
+
+    MoveRegistersLong 0xa0;
+    SysCall PrintCString;
+
+label teardown:
+    MoveRegistersLong 0x91;
+    MoveRegistersLong 0xa0; // de-allocates memory in r10
+    SysCall MemoryFree;
+
+label close_file:
+    MoveRegistersLong 0xb0; // closes file pointer of r11
+    SysCall FClose;
 
 label _end:
 

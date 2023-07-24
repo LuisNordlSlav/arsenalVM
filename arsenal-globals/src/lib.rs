@@ -121,6 +121,12 @@ pub enum SysCalls {
     PrintCString,
     MemoryAllocate,
     MemoryFree,
+    FOpen,
+    FGetC,
+    FPutC,
+    FClose,
+    FTell,
+    FSeek,
 
     // nothing after this
     __END__

@@ -36,6 +36,7 @@ name = "arsenal-vm"
 version = "0.1.0"
 dependencies = [
  "arsenal-globals",
+ "libc",
 ]
 
 [[package]]

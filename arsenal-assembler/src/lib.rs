@@ -130,7 +130,7 @@ fn parse_arg_sequence(tokens: &mut std::iter::Peekable<std::slice::Iter<'_, toke
                 }
             },
             Hex(num) => {
-                let num = u8::from_str_radix(num, 16).unwrap();
+                let num = u8::from_str_radix(&num[2..], 16).unwrap();
                 data.push(DataObject::Byte(num));
                 *bytes_count += 1;
             },

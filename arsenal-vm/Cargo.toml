@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 arsenal-globals = { path = "../arsenal-globals" }
+libc = "0.2.147"
