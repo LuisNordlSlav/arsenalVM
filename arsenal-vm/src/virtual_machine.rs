@@ -856,6 +856,9 @@ impl VirtualMachine {
         syscalls[PrintRegister as usize] = |thread| {
             println!("r{} has value {}", thread.registers[0] as usize, thread.registers[thread.registers[0] as usize]);
         };
+        syscalls[PrintRegisterSigned as usize] = |thread| {
+            println!("r{} has value {}", thread.registers[0] as usize, thread.registers[thread.registers[0] as usize] as i64);
+        };
         syscalls[PrintCString as usize] = |thread| {
             unsafe {
                 use std::ffi::{CStr, c_char};

@@ -37,7 +37,7 @@ impl Token for ArsenalToken {
             (",", Separator),
             ("->", Range),
             ("\\b0[xX][0-9A-Fa-f]+\\b", Hex),
-            (r"0|([1-9]([0-9]+)?)", Number),
+            (r"[-+]?\d+", Number),
             ("label", Label),
             ("^\\.[a-zA-Z_][a-zA-Z0-9_]*", SpecialIdentifier),
             ("^[a-zA-Z_][a-zA-Z0-9_]*", Identifier),

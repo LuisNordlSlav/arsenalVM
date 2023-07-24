@@ -190,14 +190,14 @@ fn parse_arg_sequence(tokens: &mut std::iter::Peekable<std::slice::Iter<'_, toke
             },
 
             NumericSlice(_) => {
-                let Number(num) = tokens.next().expect(&format!("expected identifier after $, got nothing")) else { panic!("expected identifier after $"); };
-                let num: u64 = num.parse().unwrap();
+                let Number(num) = tokens.next().expect(&format!("expected number after #, got nothing")) else { panic!("expected number after #"); };
+                let num: i64 = num.parse().unwrap();
                 let (mut start, mut stop) = (0, 7);
 
                 if let Some(Selection(_)) = tokens.peek() {
                     tokens.next();
-                    let Number(start_str) = tokens.next().expect("expected a number after ($name:)") else { panic!("expected a number after $name:)"); };
-                    start = start_str.parse().expect("($name:) must be followed by a number.");
+                    let Number(start_str) = tokens.next().expect("expected a number after (#num:)") else { panic!("expected a number after #num:)"); };
+                    start = start_str.parse().expect("(#num:) must be followed by a number.");
                     if let Some(Range(_)) = tokens.peek() {
                         tokens.next();
                         let Number(stop_str) = tokens.next().expect("expected a number after ($name:num->)") else { panic!("expected a number after ($name:num->)"); };

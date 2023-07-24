@@ -117,6 +117,7 @@ pub enum Instructions {
 #[derive(Debug, EnumString, Clone, Copy)]
 pub enum SysCalls {
     PrintRegister,
+    PrintRegisterSigned,
     PrintCString,
     MemoryAllocate,
     MemoryFree,
