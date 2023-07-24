@@ -9,6 +9,7 @@ use std::fs::{read, write};
 use std::env::args;
 
 fn main() {
+    application::init_hook();
 
     let arguments: Vec<String> = args().collect();
     let state = application::parse_args(arguments);

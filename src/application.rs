@@ -47,3 +47,36 @@ pub fn parse_args(args: Vec<String>) -> AppState {
         action: action,
     }
 }
+
+use std::{panic, env};
+
+pub fn custom_panic_hook(info: &panic::PanicInfo) {
+    if cfg!(not(debug_assertions)) {
+        // If this is a release build, print a custom error message without backtrace.
+        let error_message = extract_error_message(info);
+        eprintln!("Error: {}", error_message);
+    } else {
+        // If this is a debug build, use the default panic behavior with backtrace.
+        panic::take_hook()(info);
+    }
+}
+
+fn extract_error_message(info: &panic::PanicInfo) -> String {
+    if let Some(message) = info.payload().downcast_ref::<&str>() {
+        // If the payload is a string reference, return it as the error message.
+        message.to_string()
+    } else if let Some(message) = info.payload().downcast_ref::<String>() {
+        // If the payload is a `String`, return its reference as the error message.
+        message.to_string()
+    } else {
+        // If the payload is of some other type, return a generic error message.
+        "Unknown error occurred.".to_string()
+    }
+}
+
+pub fn init_hook() {
+    #[cfg(not(debug_assertions))]
+    {
+        panic::set_hook(Box::new(custom_panic_hook));
+    }
+}
