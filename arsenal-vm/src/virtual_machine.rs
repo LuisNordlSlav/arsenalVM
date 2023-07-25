@@ -2,6 +2,7 @@
 
 use std::slice::SliceIndex;
 use std::ptr::{read_unaligned, write_unaligned};
+use std::sync::Arc;
 
 use crate::virtual_thread::*;
 
@@ -27,13 +28,13 @@ pub struct VirtualMachine {
 }
 
 impl VirtualMachine {
-    pub fn new(data: Vec<u8>) -> Self {
+    pub fn new(data: &mut Vec<u8>) -> Self {
         let rules = Self::get_rules();
         let syscalls = Self::get_syscalls();
         Self {
             rules,
             syscalls,
-            instructions: data,
+            instructions: std::mem::take(data),
             threads: vec![],
         }
     }

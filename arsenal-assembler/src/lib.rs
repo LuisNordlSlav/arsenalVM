@@ -6,7 +6,7 @@ pub mod tokenizer;
 use core::panic;
 use std::{collections::HashMap, str::FromStr, io::Read};
 
-use arsenal_globals::SysCalls;
+use arsenal_globals::{SysCalls, ArsenalObject};
 use strum::VariantNames;
 
 enum DataObject {
@@ -15,7 +15,7 @@ enum DataObject {
     SizeRequest(String, u32, u32),
 }
 
-pub fn new_parse(data: Vec<u8>) -> Option<Vec<u8>> {
+pub fn new_parse(data: Vec<u8>) -> Option<ArsenalObject> {
     let as_str = match String::from_utf8(data) {
         Ok(str) => str,
         Err(_) => return None,
@@ -112,7 +112,7 @@ pub fn new_parse(data: Vec<u8>) -> Option<Vec<u8>> {
 
     assert!(return_data.len() == bytes_count);
 
-    Some(return_data)
+    Some(ArsenalObject::ArsenalCompiledObject { data: return_data })
 }
 
 fn parse_arg_sequence(tokens: &mut std::iter::Peekable<std::slice::Iter<'_, tokenizer::ArsenalToken>>, data: &mut Vec<DataObject>, bytes_count: &mut usize) {

@@ -13,3 +13,4 @@ libc = "0.2.147"
 arsenal-assembler = { path = "./arsenal-assembler" }
 arsenal-globals = { path = "./arsenal-globals" }
 arsenal-vm = { path = "./arsenal-vm" }
+arsenal-linker = { path = "./arsenal-linker" }

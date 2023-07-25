@@ -132,5 +132,10 @@ pub enum SysCalls {
     __END__
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub struct ArsenalHeader {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ArsenalObject {
+    ArsenalLibraryObject {},
+    ArsenalCompiledObject {
+        data: Vec<u8>,
+    },
+}
