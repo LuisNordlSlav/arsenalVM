@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum AppAction {
     Run,
     CompileRun,
@@ -5,10 +6,12 @@ pub enum AppAction {
     Null,
 }
 
+#[derive(Debug)]
 pub struct AppState {
     pub input_file: String,
     pub output_file: String,
     pub action: AppAction,
+    pub base: String,
 }
 
 pub fn parse_args(args: Vec<String>) -> AppState {
@@ -41,12 +44,34 @@ pub fn parse_args(args: Vec<String>) -> AppState {
         }
     }
 
-    AppState {
+    let base = match get_folder_path(&input) {
+        Some(s) => s,
+        None => "".to_string(),
+    };
+
+    let state = AppState {
         input_file: input,
         output_file: output,
         action: action,
+        base: base,
+    };
+    state
+}
+
+use std::path::Path;
+
+fn get_folder_path(file_path: &str) -> Option<String> {
+    let path = Path::new(file_path);
+    if path.is_file() {
+        match path.parent() {
+            Some(parent_path) => Some(parent_path.canonicalize().ok()?.to_string_lossy().to_string()),
+            None => None,
+        }
+    } else {
+        None
     }
 }
+
 
 use std::{panic, env};
 

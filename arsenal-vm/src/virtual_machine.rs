@@ -28,9 +28,10 @@ pub struct VirtualMachine {
 }
 
 impl VirtualMachine {
-    pub fn new(data: &mut Vec<u8>) -> Self {
+    pub fn new(data: &mut Vec<u8>, base: String) -> Self {
         let rules = Self::get_rules();
         let syscalls = Self::get_syscalls();
+        std::env::set_current_dir(base);
         Self {
             rules,
             syscalls,
@@ -324,6 +325,32 @@ impl VirtualMachine {
                 thread.registers[RegisterRoles::ProgramCounter as usize] = address;
             }
         };
+
+        rules[JumpIfNotEqualTo as usize] = |thread| {
+            let address = thread.last::<u64>();
+            if (thread.alu_flags & ALUFlags::Equal as u8) == 0 {
+                thread.registers[RegisterRoles::ProgramCounter as usize] = address;
+            }
+        };
+        rules[JumpIfNotGreaterThan as usize] = |thread| {
+            let address = thread.last::<u64>();
+            if (thread.alu_flags & ALUFlags::Greater as u8) == 0 {
+                thread.registers[RegisterRoles::ProgramCounter as usize] = address;
+            }
+        };
+        rules[JumpIfNotLessThan as usize] = |thread| {
+            let address = thread.last::<u64>();
+            if (thread.alu_flags & ALUFlags::Lesser as u8) == 0 {
+                thread.registers[RegisterRoles::ProgramCounter as usize] = address;
+            }
+        };
+        rules[JumpIfNotZero as usize] = |thread| {
+            let address = thread.last::<u64>();
+            if (thread.alu_flags & ALUFlags::Zero as u8) == 0 {
+                thread.registers[RegisterRoles::ProgramCounter as usize] = address;
+            }
+        };
+
         rules[JumpTo as usize] = |thread| {
             let address = thread.last::<u64>();
             thread.registers[RegisterRoles::ProgramCounter as usize] = address;
@@ -908,7 +935,7 @@ impl VirtualMachine {
         };
         syscalls[FTell as usize] = |thread| {
             use std::ffi::c_char;
-            let ptr1 = (thread.registers[0].wrapping_add(&thread.parent.instructions[0] as *const _ as *const u8 as u64)) as usize;
+            let ptr1 = (thread.registers[0].wrapping_add(base(thread))) as usize;
             unsafe {
                 thread.registers[1] = libc::ftell((ptr1 as u64) as *mut libc::FILE) as u64;
             }
@@ -920,6 +947,47 @@ impl VirtualMachine {
             let whence = thread.registers[2];
             unsafe {
                 thread.registers[1] = libc::fseek((ptr1 as u64) as *mut libc::FILE, offset as i64 as i32, whence as i32) as u64;
+            }
+        };
+        syscalls[MapMemoryLocalGlobal as usize] = |thread| {
+            thread.registers[0] = thread.registers[0].wrapping_add(base(thread));
+        };
+        syscalls[MapMemoryGlobalLocal as usize] = |thread| {
+            thread.registers[0] = thread.registers[0].wrapping_sub(base(thread));
+        };
+        syscalls[LoadDLL as usize] = |thread| {
+            let name_ptr = thread.registers[0].wrapping_add(base(thread));
+            let name = match unsafe { std::ffi::CStr::from_ptr(name_ptr as *const i8) }.to_str() {
+                Ok(s) => s,
+                Err(_) => "",
+            };
+            unsafe {
+                thread.registers[0] = (dll_handler::load_library_by_name(name) as u64).wrapping_sub(base(thread));
+            }
+        };
+        syscalls[DeleteDLL as usize] = |thread| {
+            let dll = thread.registers[0].wrapping_add(base(thread)) as *const libloading::Library;
+            unsafe {
+                dll_handler::delete_library(dll);
+            }
+        };
+        syscalls[LocateSymbol as usize] = |thread| {
+            let dll = thread.registers[0].wrapping_add(base(thread)) as *const libloading::Library;
+            let name_ptr = thread.registers[1].wrapping_add(base(thread));
+            let name = match unsafe { std::ffi::CStr::from_ptr(name_ptr as *const i8) }.to_str() {
+                Ok(s) => s,
+                Err(_) => "",
+            };
+            unsafe {
+                thread.registers[0] = dll_handler::get_symbol_address(dll, name) as u64;
+            }
+        };
+        syscalls[CallCFunction as usize] = |thread| {
+            let func = thread.registers[0].wrapping_sub(base(thread));
+            let buffer = thread.registers[1].wrapping_sub(base(thread));
+            let buff_size = thread.registers[2];
+            unsafe {
+                thread.registers[0] = dll_handler::call_c_function(func as *const std::os::raw::c_void, buffer as *const u8, buff_size) as u64;
             }
         };
         syscalls

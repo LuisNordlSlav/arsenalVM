@@ -68,6 +68,10 @@ pub enum Instructions {
     JumpIfZero,
     JumpIfLessThan,
     JumpIfEqualTo,
+    JumpIfNotGreaterThan,
+    JumpIfNotZero,
+    JumpIfNotLessThan,
+    JumpIfNotEqualTo,
     JumpTo,
     MoveRegistersByte,
     MoveRegistersShort,
@@ -127,6 +131,12 @@ pub enum SysCalls {
     FClose,
     FTell,
     FSeek,
+    MapMemoryLocalGlobal,
+    MapMemoryGlobalLocal,
+    LoadDLL,
+    DeleteDLL,
+    LocateSymbol,
+    CallCFunction,
 
     // nothing after this
     __END__

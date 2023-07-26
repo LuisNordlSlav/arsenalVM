@@ -1,10 +1,10 @@
 use arsenal_globals::ArsenalObject;
 use bincode::{deserialize, serialize};
 
-pub fn link(obj: &mut ArsenalObject) -> &mut Vec<u8> {
+pub fn extract_instructions(obj: &mut ArsenalObject) -> &mut Vec<u8> {
     match obj {
         ArsenalObject::ArsenalCompiledObject { ref mut data } => data,
-        ArsenalObject::ArsenalLibraryObject {} => todo!(),
+        _ => panic!("instructions can only be extracted from compiled objects, not libraries"),
     }
 }
 
