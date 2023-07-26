@@ -1,0 +1,49 @@
+JumpTo &_start;
+
+label _data:
+    () dll_name = "library" 0;
+    () sym_name = "some_func" 0;
+    () fail_load_dll = "failed to load dll `" 0;
+    () end_quote = "`" 0x0a 0;
+    () exit = 0x0a "exiting..." 0;
+
+label _start:
+
+    LoadRegisterLong 0 &dll_name;
+    SysCall LoadDLL;
+    PushRegisterLong 0;
+
+    SysCall MapMemoryLocalGlobal;
+
+    CompareRegisterLiteralLong 0 #0;
+    JumpIfNotEqualTo &_1;
+
+    LoadRegisterLong 0 &fail_load_dll;
+    SysCall PrintCString;
+    LoadRegisterLong 0 &dll_name;
+    SysCall PrintCString;
+    LoadRegisterLong 0 &end_quote;
+    SysCall PrintCString;
+
+    JumpTo &_end;
+
+label _1:
+
+    SysCall MapMemoryGlobalLocal;
+
+    LoadRegisterLong 1 &sym_name;
+    SysCall LocateSymbol;
+
+    LoadRegisterLong 1 #0;
+    LoadRegisterLong 2 #0;
+    SysCall CallCFunction;
+
+label cleanup:
+    PopRegisterLong 0;
+    SysCall DeleteDLL;
+
+    LoadRegisterLong 0 &exit;
+    SysCall PrintCString;
+
+label _end:
+    Halt;
