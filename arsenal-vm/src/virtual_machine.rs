@@ -985,12 +985,21 @@ impl VirtualMachine {
                 thread.registers[0] = location.wrapping_add(base(thread));
             }
         };
+        // syscalls[CallCFunction as usize] = |thread| {
+        //     let func = thread.registers[0].wrapping_sub(base(thread));
+        //     let buffer = thread.registers[1].wrapping_add(base(thread));
+        //     let buff_size = thread.registers[2];
+        //     unsafe {
+        //         thread.registers[0] = dll_handler::call_c_function(func as *const std::os::raw::c_void, buffer as *const u8, buff_size) as u64;
+        //     }
+        // };
         syscalls[CallCFunction as usize] = |thread| {
             let func = thread.registers[0].wrapping_sub(base(thread));
-            let buffer = thread.registers[1].wrapping_add(base(thread));
-            let buff_size = thread.registers[2];
+            let arguments_buffer = thread.registers[1].wrapping_add(base(thread));
+            let arguments_count = thread.registers[2];
+            let data_buffer = thread.registers[3].wrapping_add(base(thread));
             unsafe {
-                thread.registers[0] = dll_handler::call_c_function(func as *const std::os::raw::c_void, buffer as *const u8, buff_size) as u64;
+                thread.registers[0] = dll_handler::call_c_function_args(func as *const std::os::raw::c_void, arguments_buffer as *const u8, arguments_count, data_buffer as *const u8) as u64;
             }
         };
         syscalls

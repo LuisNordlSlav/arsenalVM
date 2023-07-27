@@ -19,8 +19,9 @@ void* LocateSymbol(void* dll, const char* sym_name) {
     if (!dll) {
         return NULL;
     }
+    void* ret = (void*)GetProcAddress((HMODULE)dll, sym_name);
 
-    return (void*)GetProcAddress((HMODULE)dll, sym_name);
+    return ret;
 }
 
 #else

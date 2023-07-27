@@ -51,25 +51,85 @@ pub unsafe fn get_symbol_address(lib: *const Library, sym: &str) -> *const c_voi
     }
 }
 
-pub unsafe fn call_c_function(func: *const c_void, buffer: *const u8, buff_size: u64) -> *const c_void {
-    assert!(buff_size % 8 == 0, "the buffer must be a list of u64s, but cannot be evenly distributed between values of its size");
+use std::ptr::read_unaligned;
+
+pub unsafe fn call_c_function_args(func: *const c_void, arguments_buffer: *const u8, arguments_count: u64, data_buffer: *const u8) -> *const c_void {
     if func as u64 == 0 as u64 {
         return 0 as *const c_void;
     }
+    if arguments_count == 0 {
+        unsafe {
+            call::<()>(CodePtr(func as u64 as *mut c_void), &[]);
+        }
+        return 0 as *const c_void;
+    }
+    let mut data_vec = vec![];
     let mut arguments = vec![];
 
-    if buff_size != 0 {
-        for i in 0..(buff_size / 8) {
-            unsafe {
-                arguments.push(arg(
-                    &*((buffer as u64 + i as u64) as *const u64)
-                ))
+    unsafe {
+        let mut buffer_offset = 0;
+        let return_type_id = *arguments_buffer;
+        match return_type_id {
+            0 => {},
+            1 => buffer_offset += 1,
+            2 => buffer_offset += 2,
+            3 => buffer_offset += 4,
+            4 => buffer_offset += 8,
+            5 => buffer_offset += std::mem::size_of::<usize>(),
+            _ => unreachable!(),
+        }
+        let base_offset = buffer_offset as u64;
+        for offset in 1..arguments_count {
+            match *((arguments_buffer as u64 + offset as u64) as *const u8) {
+                0 => {}, // void
+                1 => {
+                    data_vec.push(read_unaligned((data_buffer as u64 + buffer_offset as u64 - base_offset) as *const i8) as u64);
+                    arguments.push(arg(
+                        &*(&data_vec[data_vec.len() - 1] as *const _ as *const i8)
+                    ));
+                    buffer_offset += 1;
+                }, // u8
+                2 => {
+                    data_vec.push(read_unaligned((data_buffer as u64 + buffer_offset as u64 - base_offset) as *const i16) as u64);
+                    arguments.push(arg(
+                        &*(&data_vec[data_vec.len() - 1] as *const _ as *const i16)
+                    ));
+                    buffer_offset += 2;
+                }, // u16
+                3 => {
+                    data_vec.push(read_unaligned((data_buffer as u64 + buffer_offset as u64 - base_offset) as *const i32) as u64);
+                    arguments.push(arg(
+                        &*(&data_vec[data_vec.len() - 1] as *const _ as *const i32)
+                    ));
+                    buffer_offset += 4;
+                }, // u32
+                4 => {
+                    data_vec.push(read_unaligned((data_buffer as u64 + buffer_offset as u64 - base_offset) as *const i64) as u64);
+                    arguments.push(arg(
+                        &*(&data_vec[data_vec.len() - 1] as *const _ as *const i64)
+                    ));
+                    buffer_offset += 8;
+                }, // u64
+                5 => {
+                    data_vec.push(read_unaligned((data_buffer as u64 + buffer_offset as u64 - base_offset) as *const isize) as u64);
+                    arguments.push(arg(
+                        &*(&data_vec[data_vec.len() - 1] as *const _ as *const isize)
+                    ));
+                    buffer_offset += std::mem::size_of::<usize>();
+                }, // usize
+                _ => unreachable!(),
             }
         }
-    }
 
-    unsafe {
-        call::<*const c_void>(CodePtr(func as u64 as *mut c_void), &arguments[..])
+        match return_type_id {
+            0 => { call::<()>(CodePtr(func as u64 as *mut c_void), &arguments[..]); 0 as *const c_void},
+            1 => call::<i8>(CodePtr(func as u64 as *mut c_void), &arguments[..]) as *const c_void,
+            2 => call::<i16>(CodePtr(func as u64 as *mut c_void), &arguments[..]) as *const c_void,
+            3 => call::<i32>(CodePtr(func as u64 as *mut c_void), &arguments[..]) as *const c_void,
+            4 => call::<i64>(CodePtr(func as u64 as *mut c_void), &arguments[..]) as *const c_void,
+            5 => call::<isize>(CodePtr(func as u64 as *mut c_void), &arguments[..]) as *const c_void,
+            _ => unreachable!(),
+        }
     }
 }
 

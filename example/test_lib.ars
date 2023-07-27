@@ -2,10 +2,13 @@ JumpTo &_start;
 
 label _data:
     () dll_name = "library" 0;
-    () sym_name = "some_func" 0;
+    () sym_name = "test_b" 0;
     () fail_load_dll = "failed to load dll `" 0;
     () end_quote = "`" 0x0a 0;
-    () exit = 0x0a "exiting..." 0;
+    () exit = "exiting..." 0;
+
+    (arg_count) arg_types_buffer = 5 5 5;
+    () args_to_pass = #3 #5; // on 32 bit system, use #3:0->3 and #5:0->3 for 32 bit sizes rather than the full 64 bits
 
 label _start:
 
@@ -14,9 +17,29 @@ label _start:
     PushRegisterLong 0;
 
     SysCall MapMemoryLocalGlobal;
-
     CompareRegisterLiteralLong 0 #0;
-    JumpIfNotEqualTo &_1;
+    JumpIfEqualTo &dll_load_failure;
+    SysCall MapMemoryGlobalLocal;
+
+    LoadRegisterLong 1 &sym_name;
+    SysCall LocateSymbol;
+
+    // locate symbol puts the function address in r0
+    LoadRegisterLong 1 &arg_types_buffer; // r1 has list of bytes, each byte is the data type of the argument. first byte is return type.
+    LoadRegisterLong 2 $arg_count;        // number of arguments, including return type
+    LoadRegisterLong 3 &args_to_pass;     // pointer to data to pass in
+    SysCall CallCFunction;
+
+    PopRegisterLong 0;
+    SysCall DeleteDLL;
+
+    LoadRegisterLong 0 &exit;
+    SysCall PrintCString;
+
+label _end:
+    Halt;
+
+label dll_load_failure:
 
     LoadRegisterLong 0 &fail_load_dll;
     SysCall PrintCString;
@@ -26,24 +49,3 @@ label _start:
     SysCall PrintCString;
 
     JumpTo &_end;
-
-label _1:
-
-    SysCall MapMemoryGlobalLocal;
-
-    LoadRegisterLong 1 &sym_name;
-    SysCall LocateSymbol;
-
-    LoadRegisterLong 1 #0;
-    LoadRegisterLong 2 #0;
-    SysCall CallCFunction;
-
-label cleanup:
-    PopRegisterLong 0;
-    SysCall DeleteDLL;
-
-    LoadRegisterLong 0 &exit;
-    SysCall PrintCString;
-
-label _end:
-    Halt;
